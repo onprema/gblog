@@ -1,3 +1,4 @@
+// cmd/publish.go
 package cmd
 
 import (
@@ -17,18 +18,20 @@ var publishCmd = &cobra.Command{
 	Long: `Publish a blog post to GitHub Gists.
 
 This command will upload all files in the post directory to a new gist
-and open it in your default browser.`,
+and open it in your default browser. Use --update to update an existing gist.`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return publishPost(args[0])
+		update, _ := cmd.Flags().GetBool("update")
+		return publishPost(args[0], update)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(publishCmd)
+	publishCmd.Flags().BoolP("update", "u", false, "Update existing gist instead of creating new one")
 }
 
-func publishPost(postID string) error {
+func publishPost(postID string, update bool) error {
 	// Find post directory
 	postDir, err := findPostDir(postID)
 	if err != nil {
@@ -47,10 +50,10 @@ func publishPost(postID string) error {
 		return fmt.Errorf("failed to parse metadata: %w", err)
 	}
 
-	// Check if already published
-	if meta.GistID != "" {
+	// Check if already published and handle accordingly
+	if meta.GistID != "" && !update {
 		fmt.Printf("⚠️  Post already published: %s\n", meta.GistURL)
-		fmt.Println("Use 'gh gist edit' to update it manually.")
+		fmt.Println("Use 'gblog publish --update' to update the existing gist.")
 		return nil
 	}
 
@@ -59,60 +62,23 @@ func publishPost(postID string) error {
 		return err
 	}
 
-	// Prepare gist creation command
-	args := []string{"gist", "create"}
+	var gistURL, gistID string
 
-	if meta.Public {
-		args = append(args, "--public")
-	}
-
-	if meta.Description != "" {
-		args = append(args, "--desc", meta.Description)
-	}
-
-	// Add filename arguments for all files in the directory
-	files, err := os.ReadDir(postDir)
-	if err != nil {
-		return fmt.Errorf("failed to read post directory: %w", err)
-	}
-
-	var gistFiles []string
-	for _, file := range files {
-		if file.IsDir() || strings.HasPrefix(file.Name(), ".") {
-			continue // Skip directories and hidden files like .meta.json
+	if meta.GistID != "" && update {
+		// Update existing gist
+		gistURL, gistID, err = updateExistingGist(postDir, &meta)
+		if err != nil {
+			return err
 		}
-
-		filePath := filepath.Join(postDir, file.Name())
-		gistFiles = append(gistFiles, filePath)
-	}
-
-	if len(gistFiles) == 0 {
-		return fmt.Errorf("no files found to publish in %s", postDir)
-	}
-
-	args = append(args, gistFiles...)
-
-	fmt.Printf("📤 Publishing post '%s'...\n", meta.Title)
-	fmt.Printf("Files: %v\n", gistFiles)
-
-	// Execute gh gist create
-	cmd := exec.Command("gh", args...)
-	output, err := cmd.Output()
-	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf("failed to create gist: %s", string(exitError.Stderr))
+		fmt.Printf("✅ Updated existing gist!\n")
+	} else {
+		// Create new gist
+		gistURL, gistID, err = createNewGist(postDir, &meta)
+		if err != nil {
+			return err
 		}
-		return fmt.Errorf("failed to create gist: %w", err)
+		fmt.Printf("✅ Published successfully!\n")
 	}
-
-	gistURL := strings.TrimSpace(string(output))
-
-	// Extract gist ID from URL
-	parts := strings.Split(gistURL, "/")
-	if len(parts) == 0 {
-		return fmt.Errorf("invalid gist URL returned: %s", gistURL)
-	}
-	gistID := parts[len(parts)-1]
 
 	// Update metadata with gist info
 	meta.GistID = gistID
@@ -130,7 +96,6 @@ func publishPost(postID string) error {
 		return fmt.Errorf("failed to write updated metadata: %w", err)
 	}
 
-	fmt.Printf("✅ Published successfully!\n")
 	fmt.Printf("🔗 Gist URL: %s\n", gistURL)
 	fmt.Printf("📝 Gist ID: %s\n", gistID)
 
@@ -142,6 +107,105 @@ func publishPost(postID string) error {
 	}
 
 	return nil
+}
+
+func createNewGist(postDir string, meta *PostMeta) (string, string, error) {
+	// Prepare gist creation command
+	args := []string{"gist", "create"}
+
+	if meta.Public {
+		args = append(args, "--public")
+	}
+
+	if meta.Description != "" {
+		args = append(args, "--desc", meta.Description)
+	}
+
+	// Add filename arguments for all files in the directory
+	gistFiles, err := getGistFiles(postDir)
+	if err != nil {
+		return "", "", err
+	}
+
+	if len(gistFiles) == 0 {
+		return "", "", fmt.Errorf("no files found to publish in %s", postDir)
+	}
+
+	args = append(args, gistFiles...)
+
+	fmt.Printf("📤 Publishing post '%s'...\n", meta.Title)
+	fmt.Printf("Files: %v\n", gistFiles)
+
+	// Execute gh gist create
+	cmd := exec.Command("gh", args...)
+	output, err := cmd.Output()
+	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			return "", "", fmt.Errorf("failed to create gist: %s", string(exitError.Stderr))
+		}
+		return "", "", fmt.Errorf("failed to create gist: %w", err)
+	}
+
+	gistURL := strings.TrimSpace(string(output))
+
+	// Extract gist ID from URL
+	parts := strings.Split(gistURL, "/")
+	if len(parts) == 0 {
+		return "", "", fmt.Errorf("invalid gist URL returned: %s", gistURL)
+	}
+	gistID := parts[len(parts)-1]
+
+	return gistURL, gistID, nil
+}
+
+func updateExistingGist(postDir string, meta *PostMeta) (string, string, error) {
+	// Get all files to update
+	gistFiles, err := getGistFiles(postDir)
+	if err != nil {
+		return "", "", err
+	}
+
+	if len(gistFiles) == 0 {
+		return "", "", fmt.Errorf("no files found to update in %s", postDir)
+	}
+
+	fmt.Printf("📤 Updating existing gist '%s'...\n", meta.Title)
+	fmt.Printf("Files: %v\n", gistFiles)
+
+	// Prepare update command
+	args := []string{"gist", "edit", meta.GistID}
+	args = append(args, gistFiles...)
+
+	// Execute gh gist edit
+	cmd := exec.Command("gh", args...)
+	if err := cmd.Run(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			return "", "", fmt.Errorf("failed to update gist: %s", string(exitError.Stderr))
+		}
+		return "", "", fmt.Errorf("failed to update gist: %w", err)
+	}
+
+	// Return existing URL and ID
+	return meta.GistURL, meta.GistID, nil
+}
+
+func getGistFiles(postDir string) ([]string, error) {
+	files, err := os.ReadDir(postDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read post directory: %w", err)
+	}
+
+	var gistFiles []string
+	for _, file := range files {
+		if file.IsDir() || strings.HasPrefix(file.Name(), ".") {
+			continue // Skip directories and hidden files like .meta.json
+		}
+
+		filePath := filepath.Join(postDir, file.Name())
+		gistFiles = append(gistFiles, filePath)
+	}
+
+	return gistFiles, nil
 }
 
 func findPostDir(postID string) (string, error) {

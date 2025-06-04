@@ -323,16 +323,29 @@ A gist-powered blog created with [gblog](https://github.com/onprema/gblog).
 
 This repository contains my blog posts, each published as a GitHub Gist.
 
+Posts are organized with descriptive filenames (e.g., `+"`getting-started-with-go.md`"+`) rather than generic names.
+
 ## Usage
 
 - Create new post: `+"`gblog new`"+`
 - List posts: `+"`gblog list`"+`
+- Edit post: `+"`gblog edit <id>`"+`
 - Publish post: `+"`gblog publish <id>`"+`
+- Update existing gist: `+"`gblog publish <id> --update`"+`
 - Export all: `+"`gblog export`"+`
 
 ## Posts Directory
 
 All posts are organized in the `+"`posts/`"+` directory with the format `+"`XXXX-post-title/`"+`.
+Each post contains a descriptively named markdown file and any auxiliary files.
+
+## Workflow
+
+1. `+"`gblog new`"+` - Create post with interactive prompts
+2. `+"`gblog edit <id>`"+` - Open directory to write content
+3. `+"`git add . && git commit`"+` - Version control your changes
+4. `+"`gblog publish <id>`"+` - Publish to GitHub Gists
+5. `+"`gblog publish <id> --update`"+` - Update gist after changes
 `, blogName)
 
 	if err := os.WriteFile("README.md", []byte(readmeContent), 0644); err != nil {

@@ -1,3 +1,4 @@
+// cmd/new.go
 package cmd
 
 import (
@@ -245,8 +246,9 @@ func createPost(m newPostModel) error {
 		return fmt.Errorf("failed to write metadata: %w", err)
 	}
 
-	// Create markdown file
-	mdPath := filepath.Join(postDir, "post.md")
+	// Create markdown file with descriptive name
+	mdFilename := fmt.Sprintf("%s.md", slug)
+	mdPath := filepath.Join(postDir, mdFilename)
 	mdContent := fmt.Sprintf("# %s\n\n", m.title.Value())
 	if m.description.Value() != "" {
 		mdContent += fmt.Sprintf("*%s*\n\n", m.description.Value())
@@ -285,7 +287,7 @@ func createPost(m newPostModel) error {
 
 	fmt.Printf("✅ Created new post: %s\n", dirName)
 	fmt.Printf("📁 Directory: posts/%s/\n", dirName)
-	fmt.Printf("📝 Edit your post: posts/%s/post.md\n", dirName)
+	fmt.Printf("📝 Edit your post: posts/%s/%s.md\n", dirName, slug)
 	if !m.isPublic {
 		fmt.Printf("🔒 This post is private and added to .gitignore\n")
 	}

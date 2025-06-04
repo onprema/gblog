@@ -14,8 +14,10 @@ gblog lets you write blog posts in markdown, add auxiliary files (code examples,
 
 - **Automated blog setup** with GitHub repository creation
 - **Interactive post creation** with beautiful CLI interface
+- **Descriptive filenames** - posts create meaningful .md files, not generic "post.md"
 - **Organized post management** with auto-generated IDs
 - **GitHub Gists integration** for publishing and sharing
+- **Gist updates** - easily update existing gists with changes
 - **Public/private post support** with automatic .gitignore management
 - **Full version control** for your blog posts
 - **Export functionality** to backup all your posts
@@ -99,6 +101,7 @@ Creates a gist and opens it in your browser automatically.
 | `gblog list` | List all blog posts with status |
 | `gblog edit <id>` | Open post directory for editing |
 | `gblog publish <id>` | Publish post to GitHub Gists |
+| `gblog publish <id> --update` | Update existing gist with changes |
 | `gblog export [file]` | Export all posts to zip file |
 
 ## Project Structure
@@ -117,24 +120,25 @@ gblog/
 ```
 my-tech-blog/
 ├── .gblog/
-│   └── config.json          # Blog configuration
+│   └── config.json                    # Blog configuration
 ├── posts/
 │   ├── 0001-my-first-post/
-│   │   ├── .meta.json       # Post metadata
-│   │   ├── post.md          # Main content
-│   │   └── example.go       # Auxiliary files
-│   └── 0002-another-post/
+│   │   ├── .meta.json                 # Post metadata
+│   │   ├── my-first-post.md           # Main content (descriptive filename)
+│   │   └── example.go                 # Auxiliary files
+│   └── 0002-iam-gcp-vs-aws/
 │       ├── .meta.json
-│       └── post.md
-├── .gitignore               # Auto-updated for private posts
-└── README.md                # Blog description
+│       ├── iam-gcp-vs-aws.md          # Descriptive filename based on title
+│       └── comparison-table.json
+├── .gitignore                         # Auto-updated for private posts
+└── README.md                          # Blog description
 ```
 
 ## Example Workflow
 
 ```bash
 # Install gblog
-go install github.com/onpremasername/gblog@latest
+go install github.com/onprema/gblog@latest
 
 # Create your blog (interactive)
 gblog init
@@ -153,7 +157,7 @@ gblog new
 
 # Edit the post
 gblog edit 0001
-# Add content to post.md, include example files
+# Add content to getting-started-with-go-generics.md, include example files
 
 # Commit your work
 git add .
@@ -163,6 +167,14 @@ git push
 # Publish to gist when ready
 gblog publish 0001
 # Opens: https://gist.github.com/yourusername/...
+
+# Make updates to your post
+gblog edit 0001
+# Edit files, rename, add new files, etc.
+
+# Update the existing gist
+gblog publish 0001 --update
+# Updates the same gist with your changes
 
 # List all posts
 gblog list
@@ -200,7 +212,7 @@ Each post includes metadata in `.meta.json`:
 
 ```bash
 # Clone the tool repository
-git clone https://github.com/onpremasername/gblog
+git clone https://github.com/onprema/gblog
 cd gblog
 
 # Install dependencies
@@ -239,21 +251,12 @@ Each gets its own repository and configuration.
 ## Why Gist-Powered Blogging?
 
 - **Version control** - Every post is versioned through Git and GitHub
-- **Dual backup** - Posts live in your repo AND as gists
-- **Searchable** - Gists are indexed and searchable on GitHub
+- **Searchable** - Gists are indexed and searchable on GitHub (e.g., `user:onprema`)
 - **Embeddable** - Easy to embed gists in documentation or other sites
 - **Collaborative** - Others can fork, comment, and suggest improvements
 - **Portable** - Your content lives in your own repositories
 - **Developer-friendly** - Write in markdown with syntax highlighting
 - **Zero hosting costs** - Uses GitHub's infrastructure
-
-## Contributing
-
-1. Fork the gblog repository (the tool, not your blog)
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## Repository Separation
 
@@ -261,97 +264,3 @@ Each gets its own repository and configuration.
 - **Blog content** lives in separate repositories created by `gblog init`
 - **Clean separation** ensures the tool remains reusable
 - **Personal content** stays in your own repositories
-
-## License
-
-MIT License - see LICENSE file for details.
-
-## Troubleshooting
-
-**"GitHub CLI not authenticated"**
-```bash
-gh auth login
-```
-
-**"Failed to create repository"**
-- Ensure you have GitHub CLI installed and authenticated
-- Check if repository name already exists
-- Verify GitHub permissions
-
-**"Command not found: gblog"**
-```bash
-go install github.com/onpremasername/gblog@latest
-```
-
-**"Blog not initialized"**
-```bash
-# Navigate to your blog directory first
-cd ~/my-blog-name
-gblog list
-```
-
-## Advanced Usage
-
-### Custom Blog Location
-```bash
-gblog init my-blog
-# Then specify custom path during interactive setup
-```
-
-### Manual Repository Creation
-If automatic GitHub repository creation fails:
-```bash
-cd ~/my-blog
-gh repo create my-blog --public --source=. --remote=origin --push
-```
-
-### Working with Existing Repositories
-You can run `gblog init` in an existing directory to add blog functionality.
-
-## Roadmap
-
-- [ ] Template support for different post types
-- [ ] Tag and category system
-- [ ] RSS feed generation from blog repository
-- [ ] Custom post templates
-- [ ] Integration with static site generators
-- [ ] Batch operations for multiple posts
-- [ ] Blog analytics and statistics
-- [ ] Cross-blog post migration toolsbash
-gh auth login
-```
-
-**"Failed to create repository"**
-- Ensure you have GitHub CLI installed and authenticated
-- Check if repository name already exists
-- Verify GitHub permissions
-
-**"Command not found: gblog"**
-```bash
-go install github.com/onpremasername/gblog@latest
-```
-
-**"Blog not initialized"**
-```bash
-# Navigate to your blog directory first
-cd ~/my-blog-name
-gblog list
-```
-
-## Advanced Usage
-
-### Custom Blog Location
-```bash
-gblog init my-blog
-# Then specify custom path during interactive setup
-```
-
-### Manual Repository Creation
-If automatic GitHub repository creation fails:
-```bash
-cd ~/my-blog
-gh repo create my-blog --public --source=. --remote=origin --push
-```
-
-### Working with Existing Repositories
-You can run `gblog init` in an existing directory to add blog functionality.
