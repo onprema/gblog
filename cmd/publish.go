@@ -1,4 +1,3 @@
-// cmd/publish.go
 package cmd
 
 import (
@@ -59,9 +58,6 @@ func publishPost(postID string) error {
 	if err := checkGHAuth(); err != nil {
 		return err
 	}
-
-	// Build gist title with date
-	gistTitle := fmt.Sprintf("%s: %s", meta.ID, meta.Title)
 
 	// Prepare gist creation command
 	args := []string{"gist", "create"}

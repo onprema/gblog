@@ -1,4 +1,3 @@
-// cmd/new.go
 package cmd
 
 import (

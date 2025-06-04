@@ -1,4 +1,3 @@
-// cmd/list.go
 package cmd
 
 import (
@@ -7,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -16,25 +13,25 @@ import (
 
 var (
 	tableHeaderStyle = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#7C3AED")).
-		Border(lipgloss.NormalBorder(), false, false, true, false).
-		BorderForeground(lipgloss.Color("#7C3AED"))
+				Bold(true).
+				Foreground(lipgloss.Color("#7C3AED")).
+				Border(lipgloss.NormalBorder(), false, false, true, false).
+				BorderForeground(lipgloss.Color("#7C3AED"))
 
 	tableRowStyle = lipgloss.NewStyle().
-		PaddingRight(2)
+			PaddingRight(2)
 
 	publishedStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#22C55E")).
-		Bold(true)
+			Foreground(lipgloss.Color("#22C55E")).
+			Bold(true)
 
 	draftStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#F59E0B")).
-		Bold(true)
+			Foreground(lipgloss.Color("#F59E0B")).
+			Bold(true)
 
 	privateStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#EF4444")).
-		Bold(true)
+			Foreground(lipgloss.Color("#EF4444")).
+			Bold(true)
 )
 
 type PostInfo struct {
@@ -206,3 +203,4 @@ func getColumnWidth(col int) int {
 		return widths[col]
 	}
 	return 20
+}
