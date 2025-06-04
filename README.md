@@ -26,7 +26,7 @@ gblog lets you write blog posts in markdown, add auxiliary files (code examples,
 ### From Source
 
 ```bash
-git clone https://github.com/your-username/gblog
+git clone https://github.com/onprema/gblog
 cd gblog
 make install
 ```
@@ -34,7 +34,7 @@ make install
 ### Direct Install
 
 ```bash
-go install github.com/your-username/gblog@latest
+go install github.com/onprema/gblog@latest
 ```
 
 ## Quick Start
@@ -141,7 +141,7 @@ Each post includes metadata in `.meta.json`:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/gblog
+git clone https://github.com/onprema/gblog
 cd gblog
 
 # Install dependencies
