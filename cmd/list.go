@@ -1,3 +1,4 @@
+// cmd/list.go
 package cmd
 
 import (
@@ -6,32 +7,21 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 )
 
 var (
-	tableHeaderStyle = lipgloss.NewStyle().
-				Bold(true).
-				Foreground(lipgloss.Color("#7C3AED")).
-				Border(lipgloss.NormalBorder(), false, false, true, false).
-				BorderForeground(lipgloss.Color("#7C3AED"))
+	listTitleStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#7C3AED")).
+			Margin(1, 0)
 
-	tableRowStyle = lipgloss.NewStyle().
-			PaddingRight(2)
-
-	publishedStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#22C55E")).
-			Bold(true)
-
-	draftStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#F59E0B")).
-			Bold(true)
-
-	privateStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#EF4444")).
-			Bold(true)
+	publishedColor = lipgloss.NewStyle().Foreground(lipgloss.Color("#22C55E"))
+	draftColor     = lipgloss.NewStyle().Foreground(lipgloss.Color("#F59E0B"))
+	privateColor   = lipgloss.NewStyle().Foreground(lipgloss.Color("#EF4444"))
 )
 
 type PostInfo struct {
@@ -108,79 +98,64 @@ func listPosts() error {
 		return posts[i].Meta.ID > posts[j].Meta.ID
 	})
 
-	// Display table
-	fmt.Println(titleStyle.Render("📝 Blog Posts"))
+	// Display header
+	fmt.Println(listTitleStyle.Render("📝 Blog Posts"))
 	fmt.Println()
 
-	// Headers
-	headers := []string{"ID", "Title", "Status", "Visibility", "Created", "Gist URL"}
-	headerRow := ""
-	for i, header := range headers {
-		width := getColumnWidth(i)
-		headerRow += tableHeaderStyle.Width(width).Render(header)
-		if i < len(headers)-1 {
-			headerRow += " "
-		}
-	}
-	fmt.Println(headerRow)
+	// Simple table without complex formatting
+	fmt.Printf("%-4s %-35s %-12s %-10s %-12s %s\n",
+		"ID", "Title", "Status", "Visibility", "Created", "Gist URL")
+	fmt.Println(strings.Repeat("-", 120))
 
-	// Rows
+	// Table rows
 	for _, post := range posts {
-		row := ""
-
-		// ID
-		row += tableRowStyle.Width(getColumnWidth(0)).Render(post.Meta.ID)
-		row += " "
-
-		// Title (truncated if too long)
+		// Truncate title if too long
 		title := post.Meta.Title
-		if len(title) > 30 {
-			title = title[:27] + "..."
+		if len(title) > 33 {
+			title = title[:30] + "..."
 		}
-		row += tableRowStyle.Width(getColumnWidth(1)).Render(title)
-		row += " "
 
 		// Status
-		var status string
+		status := "Draft"
+		statusColor := draftColor
 		if post.Meta.GistID != "" {
-			status = publishedStyle.Render("Published")
-		} else {
-			status = draftStyle.Render("Draft")
+			status = "Published"
+			statusColor = publishedColor
 		}
-		row += tableRowStyle.Width(getColumnWidth(2)).Render(status)
-		row += " "
 
 		// Visibility
-		var visibility string
-		if post.Meta.Public {
-			visibility = "Public"
-		} else {
-			visibility = privateStyle.Render("Private")
+		visibility := "Public"
+		visibilityColor := lipgloss.NewStyle() // no color for public
+		if !post.Meta.Public {
+			visibility = "Private"
+			visibilityColor = privateColor
 		}
-		row += tableRowStyle.Width(getColumnWidth(3)).Render(visibility)
-		row += " "
 
 		// Created date
 		created := post.Meta.CreatedAt.Format("2006-01-02")
-		row += tableRowStyle.Width(getColumnWidth(4)).Render(created)
-		row += " "
 
 		// Gist URL
-		gistURL := post.Meta.GistURL
-		if gistURL == "" {
-			gistURL = "-"
-		} else if len(gistURL) > 40 {
-			gistURL = gistURL[:37] + "..."
+		gistURL := "-"
+		if post.Meta.GistURL != "" {
+			gistURL = post.Meta.GistURL
+			if len(gistURL) > 45 {
+				gistURL = gistURL[:42] + "..."
+			}
 		}
-		row += tableRowStyle.Width(getColumnWidth(5)).Render(gistURL)
 
-		fmt.Println(row)
+		// Print row with colors
+		fmt.Printf("%-4s %-35s %-12s %-10s %-12s %s\n",
+			post.Meta.ID,
+			title,
+			statusColor.Render(status),
+			visibilityColor.Render(visibility),
+			created,
+			gistURL)
 	}
 
 	fmt.Println()
-	fmt.Printf("Total posts: %d\n", len(posts))
 
-	// Count stats
+	// Stats
 	published := 0
 	private := 0
 	for _, post := range posts {
@@ -192,15 +167,8 @@ func listPosts() error {
 		}
 	}
 
-	fmt.Printf("Published: %d, Drafts: %d, Private: %d\n", published, len(posts)-published, private)
+	fmt.Printf("Total: %d | Published: %d | Drafts: %d | Private: %d\n",
+		len(posts), published, len(posts)-published, private)
 
 	return nil
-}
-
-func getColumnWidth(col int) int {
-	widths := []int{4, 32, 10, 10, 12, 42}
-	if col < len(widths) {
-		return widths[col]
-	}
-	return 20
 }

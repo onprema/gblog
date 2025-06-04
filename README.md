@@ -13,8 +13,7 @@ gblog lets you write blog posts in markdown, add auxiliary files (code examples,
 ## Features
 
 - **Automated blog setup** with GitHub repository creation
-- **Interactive post creation** with beautiful CLI interface
-- **Descriptive filenames** - posts create meaningful .md files, not generic "post.md"
+- **Interactive post creation** with a bubbletea CLI interface
 - **Organized post management** with auto-generated IDs
 - **GitHub Gists integration** for publishing and sharing
 - **Gist updates** - easily update existing gists with changes
@@ -104,17 +103,6 @@ Creates a gist and opens it in your browser automatically.
 | `gblog publish <id> --update` | Update existing gist with changes |
 | `gblog export [file]` | Export all posts to zip file |
 
-## Project Structure
-
-**Tool Repository (gblog):**
-```
-gblog/
-├── cmd/              # CLI commands
-├── main.go          # Entry point
-├── go.mod           # Dependencies
-├── Makefile         # Build automation
-└── README.md        # This file
-```
 
 **Blog Repository (created by init):**
 ```
@@ -142,39 +130,29 @@ go install github.com/onprema/gblog@latest
 
 # Create your blog (interactive)
 gblog init
-# Enter blog name: my-tech-blog
-# Enter location: /Users/john/my-tech-blog (default)
-# Create GitHub repo: y
 
 # Navigate to your blog
-cd ~/my-tech-blog
+cd ~/my-blog
 
 # Create first post
 gblog new
-# Title: "Getting Started with Go Generics"
-# Description: "A practical guide to using generics in Go"
-# Public: y
 
 # Edit the post
 gblog edit 0001
-# Add content to getting-started-with-go-generics.md, include example files
 
-# Commit your work
+# Commit and push to your repo (optional)
 git add .
 git commit -m "Add: Getting Started with Go Generics"
 git push
 
 # Publish to gist when ready
 gblog publish 0001
-# Opens: https://gist.github.com/yourusername/...
 
 # Make updates to your post
 gblog edit 0001
-# Edit files, rename, add new files, etc.
 
 # Update the existing gist
 gblog publish 0001 --update
-# Updates the same gist with your changes
 
 # List all posts
 gblog list
